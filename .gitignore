@@ -1,0 +1,19 @@
+# General
+*.log
+*.bak
+*.DS_Store
+*.swp
+*.out
+*.class
+*.tmp
+*~.nib
+**/tmp/
+.cache/
+**/out/
+*.tar
+bin/**/*
+build/
+**/Thumbs.db
+
+# Project
+docs/
