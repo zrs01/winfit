@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+      # Linux CI must pass: non-Windows stubs stay in sync (AGENTS.md invariant).
+      - run: go test ./...
+      - run: test -z "$(gofmt -l .)"
+
+  cross-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      # The release binaries (windows_amd64) must keep compiling.
+      - run: make windows
+      - run: GOARCH=arm64 go build -trimpath ./...

@@ -13,6 +13,7 @@
 *.tar
 bin/**/*
 build/
+dist/
 **/Thumbs.db
 
 # Project

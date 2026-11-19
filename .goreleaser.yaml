@@ -1,0 +1,38 @@
+# Release packaging for winfit. Triggered by .github/workflows/release.yml on
+# a v* tag; run locally with `goreleaser release --snapshot --clean` (artifacts
+# land in dist/, no publish).
+version: 2
+project_name: winfit
+
+builds:
+  - id: winfit
+    main: .
+    binary: winfit
+    # Windows-only tool (see internal/winapi); amd64 + arm64 per AGENTS.md.
+    goos: [windows]
+    goarch: [amd64, arm64]
+    env: [CGO_ENABLED=0]
+    flags: [-trimpath]
+    # Same version stamp as the Makefile, from the release tag.
+    ldflags:
+      - "-s -w -X main.version={{ .Version }}"
+
+archives:
+  - id: winfit
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  # Auto-generated from the commits since the previous tag.
+  prerelease: auto
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
