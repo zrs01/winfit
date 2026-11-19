@@ -46,6 +46,15 @@ non-Windows stubs in sync with the windows implementations.
 - `make` — build `bin/winfit.exe` (host arch; version from `git describe`).
 - `make test` / `make fmt` / `make clean` / `make windows` (cross-build the
   release `windows_amd64` binary into `build/`).
+- Releases: push a `v*` tag → `.github/workflows/release.yml` runs GoReleaser
+  (`.goreleaser.yaml`) on ubuntu-latest, publishing zipped
+  `windows_amd64`/`windows_arm64` binaries + `checksums.txt` + changelog to
+  the GitHub Release. `main.version` comes from the tag
+  (`-ldflags -X main.version=<tag>`), same stamp as the Makefile. Check the
+  packaging locally with `goreleaser release --snapshot --clean` (output in
+  gitignored `dist/`).
+- CI: `.github/workflows/ci.yml` — `go build ./...`, `go test ./...`, gofmt
+  check on Linux, plus `make windows` and a `GOARCH=arm64` build.
 - `modd` (`modd.conf`) re-runs `go test ./internal/...` on Go changes.
 - Never introduce sh-only syntax (inline `VAR=x cmd`, `||`, `2>/dev/null`,
   `rm`, grep/awk): the Makefile pins `SHELL=cmd.exe` on Windows because
@@ -178,7 +187,9 @@ Precedence: `--hwnd` → `--title` → `--app` → self.
 - Manual matrix when relevant: Win10/11, single/dual monitor, 100/150/200%
   scaling, conhost vs Windows Terminal.
 
-Updated: 2026-11-19 (sole semantics source; ambiguous matches resolve
+Updated: 2026-11-19 (added GoReleaser release pipeline: `.goreleaser.yaml`,
+`.github/workflows/release.yml` on `v*` tags, `ci.yml`). Sole semantics
+source; ambiguous matches resolve
 through the `internal/picker` selection list, `target.Select` reports them
 as `*target.AmbiguousError`; logging/errors are stdlib `log/slog` +
 `errors` with a human `consoleHandler`, `internal/logging` is gone).

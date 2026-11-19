@@ -1,5 +1,7 @@
 # winfit
 
+[![Release](https://img.shields.io/github/v/release/zrs01/winfit?label=release)](https://github.com/zrs01/winfit/releases/latest)
+
 Set application window position and size from the command line on
 Windows 10/11.
 
@@ -35,6 +37,17 @@ user are refused. Ambiguous matches are resolved by the selection list
 above (or `winfit list` → `--hwnd`, or `--topmost`).
 
 Exit codes: `0` success, `1` runtime error, `2` usage error.
+
+## Download
+
+Prebuilt binaries for Windows x64 and ARM64 are on the
+[releases page](https://github.com/zrs01/winfit/releases/latest): one zip per
+architecture (`winfit_<version>_windows_amd64.zip`), plus `checksums.txt`.
+Unzip and put `winfit.exe` anywhere on `PATH`.
+
+Cutting a release: `git tag v1.0.0 && git push origin v1.0.0` — the
+`release` workflow runs GoReleaser (`.goreleaser.yaml`) and publishes the
+zips, checksums and changelog automatically.
 
 ## Build & test
 
