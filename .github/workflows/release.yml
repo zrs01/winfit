@@ -1,7 +1,7 @@
 name: release
 
 # Publishes a GitHub Release (zipped winfit binaries + checksums.txt) for
-# every v* tag. Cut a release with: git tag v1.0.0 && git push origin v1.0.0
+# every v* tag. Cut a release with: git tag vX.Y.Z && git push origin vX.Y.Z
 on:
   push:
     tags: ['v*']

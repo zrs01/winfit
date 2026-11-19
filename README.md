@@ -45,7 +45,7 @@ Prebuilt binaries for Windows x64 and ARM64 are on the
 architecture (`winfit_<version>_windows_amd64.zip`), plus `checksums.txt`.
 Unzip and put `winfit.exe` anywhere on `PATH`.
 
-Cutting a release: `git tag v1.0.0 && git push origin v1.0.0` — the
+Cutting a release: `git tag vX.Y.Z && git push origin vX.Y.Z` — the
 `release` workflow runs GoReleaser (`.goreleaser.yaml`) and publishes the
 zips, checksums and changelog automatically.
 
