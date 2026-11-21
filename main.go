@@ -27,6 +27,12 @@ func main() {
 		Action:  runMove,
 		Commands: []*cli.Command{
 			{
+				Name:   "get",
+				Usage:  "Print a target window's position and size (same target flags as a move)",
+				Flags:  getFlags(),
+				Action: runGet,
+			},
+			{
 				Name:   "list",
 				Usage:  "Print candidate windows (HWND PID APP CLASS TITLE) in z-order",
 				Flags:  listFlags(),

@@ -11,10 +11,12 @@ or any z-order changes, non-Windows platforms.
 
 ## Layout & boundaries
 
-- `main.go` / `flags.go` / `run.go` / `pick.go` / `logging.go` — CLI
-  assembly (urfave/cli/v3, flags use `Aliases:` for shorts) and
+- `main.go` / `flags.go` / `run.go` / `get.go` / `pick.go` / `logging.go` —
+  CLI assembly (urfave/cli/v3, flags use `Aliases:` for shorts) and
   orchestration: parse → resolve target (incl. the ambiguity prompt) →
-  compute rect → apply → corrective re-check.
+  compute rect → apply → corrective re-check. `selectorFlags()` is shared by
+  the root move and `get`; `get.go` is the read-only half (no geometry
+  flags).
 - `internal/place` — the ONLY place placement geometry is encoded (px/%
   parsing, derived sizes, keep-aspect, clamping/containment). Pure numbers;
   never imports syscall.
@@ -92,6 +94,29 @@ non-Windows stubs in sync with the windows implementations.
 - No position or size flags at all → help + exit 1 (nothing to do).
 - Exit codes: 0 ok, 1 runtime error (target errors, API failure),
   2 usage error (cli/v3 convention).
+
+## Reading (`get`)
+
+- `winfit get` = `selectorFlags()` + `--json`, no geometry flags; it reads
+  the window's own monitor (no `--monitor`) and does not refuse a
+  cross-session target, since reading moves nothing.
+- Reported numbers are the flag contract in reverse: `position` (left/top),
+  `size` (width/height) and `from` (right/bottom) are logical px measured
+  from the work-area edges — the same values `--left/--top/--right/--bottom/
+  --width/--height` take — so `get` output pastes straight into a move.
+  `rect` and `workArea` are the raw physical px from `GetWindowRect`;
+  `percent` is scale-invariant. The conversions live in
+  `place.EdgeOffsetsFrom`, `place.PercentagesFrom` and
+  `place.PhysicalToLogical` (inverse of `Spec.ScaleLogical`), never inline
+  in `get.go`.
+- Monitor attribution (`monitorOf` in `get.go`): exact work-area match
+  against `winapi.Monitors()`, then containment; index 0 = unknown.
+- State notes come from `winapi.WindowState` (`IsIconic` + `WS_MAXIMIZE`):
+  minimized ⇒ the rect is the restored geometry. `WS_MAXIMIZE` alone is not
+  taken as evidence of a maximize — `SetWindowPos` can leave the bit set on
+  a small window — so only a rect covering ≥ `maximizedFillPct` of the work
+  area is called maximized (a true maximize overhangs the work area by the
+  invisible resize border).
 
 ## Target resolution
 
@@ -177,9 +202,14 @@ Precedence: `--hwnd` → `--title` → `--app` → self.
 - `internal/place`, `internal/target` and the `internal/picker` key model:
   table-driven unit tests, pure functions, no build tags, run anywhere;
   plus a property-style invariant: any resize request ⇒ output rect
-  contained in work area. Root tests (`pick_test.go`) pin that
+  contained in work area. These helpers also carry the read-back path used
+  by `get`: `EdgeOffsetsFrom`, `PercentagesFrom`, `PhysicalToLogical`
+  (round-trip pinned at 1.25/1.5/2× scaling).
+- Root tests (`pick_test.go`) pin that
   `*target.AmbiguousError` survives `%w` wrapping (else the picker
   never runs) and that a piped run keeps the non-interactive hint.
+  `get_test.go` pins the stable `--json` key set, the flag-ready numbers in
+  the human report, the three state notes, and `monitorOf`.
 - The picker draws ASCII only (`>` cursor, `^ n above`, `v n more`):
   legacy conhost fonts rasterize box-drawing glyphs as `?`/`u`.
 - Anything needing real HWNDs stays manual/live (`winfit list`, moving
@@ -187,8 +217,9 @@ Precedence: `--hwnd` → `--title` → `--app` → self.
 - Manual matrix when relevant: Win10/11, single/dual monitor, 100/150/200%
   scaling, conhost vs Windows Terminal.
 
-Updated: 2026-11-19 (added GoReleaser release pipeline: `.goreleaser.yaml`,
-`.github/workflows/release.yml` on `v*` tags, `ci.yml`). Sole semantics
+Updated: 2026-11-21 — added `winfit get` (read position/size, `--json`),
+`place` read-back helpers, `winapi.WindowState`; earlier same pass added the
+GoReleaser release pipeline. Sole semantics
 source; ambiguous matches resolve
 through the `internal/picker` selection list, `target.Select` reports them
 as `*target.AmbiguousError`; logging/errors are stdlib `log/slog` +

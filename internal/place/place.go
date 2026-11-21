@@ -6,6 +6,7 @@ package place
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -54,6 +55,56 @@ type Rect struct{ X, Y, W, H int }
 
 func (r Rect) Right() int  { return r.X + r.W }
 func (r Rect) Bottom() int { return r.Y + r.H }
+
+// EdgeOffsets are the gaps from each work-area edge to the nearest window
+// edge: exactly what --left/--top/--right/--bottom ask for, so a rect read
+// back with `winfit get` can be reproduced by `winfit move`.
+type EdgeOffsets struct{ Left, Top, Right, Bottom int }
+
+// EdgeOffsetsFrom measures r inside wa. Values are negative when the window
+// overhangs that work-area edge.
+func EdgeOffsetsFrom(wa, r Rect) EdgeOffsets {
+	return EdgeOffsets{
+		Left:   r.X - wa.X,
+		Top:    r.Y - wa.Y,
+		Right:  wa.Right() - r.Right(),
+		Bottom: wa.Bottom() - r.Bottom(),
+	}
+}
+
+// Percentages is the flag-facing form of a rect: each edge offset and each
+// dimension as a percentage of the work-area extent on that axis. Scale-
+// invariant (both operands are physical px), so these are the values to
+// report for `--left 3.5%`-style round-tripping.
+type Percentages struct{ Left, Top, Right, Bottom, Width, Height float64 }
+
+// PercentagesFrom expresses r relative to wa. Degenerate extents yield 0.
+func PercentagesFrom(wa, r Rect) Percentages {
+	o := EdgeOffsetsFrom(wa, r)
+	pct := func(v, extent int) float64 {
+		if extent == 0 {
+			return 0
+		}
+		return float64(v) / float64(extent) * 100
+	}
+	return Percentages{
+		Left:   pct(o.Left, wa.W),
+		Top:    pct(o.Top, wa.H),
+		Right:  pct(o.Right, wa.W),
+		Bottom: pct(o.Bottom, wa.H),
+		Width:  pct(r.W, wa.W),
+		Height: pct(r.H, wa.H),
+	}
+}
+
+// PhysicalToLogical converts a physical pixel count to the logical pixels
+// that position/size flags speak (inverse of Spec.ScaleLogical).
+func PhysicalToLogical(px int, scale float64) int {
+	if scale <= 0 {
+		return px
+	}
+	return int(float64(px)/scale + math.Copysign(0.5, float64(px)))
+}
 
 // Spec carries the parsed flags. Nil means "flag not given".
 type Spec struct {

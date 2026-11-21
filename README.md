@@ -13,6 +13,8 @@ winfit -w 800 -k                             # resize, keep aspect
 winfit --title firefox -r 0 -b 0             # anchor bottom-right
 winfit --monitor 2 --left 0 --top 0          # move onto monitor 2
 winfit list                                  # HWND PID APP CLASS TITLE
+winfit get --app notepad                     # print its position and size
+winfit get --hwnd 0x001206AA --json          # same, machine-readable
 winfit --hwnd 0x001206AA -l 0 -t 0           # exact window, from list
 winfit --app chrome -l 10% --topmost         # frontmost of several matches
 winfit --title obsidian -l 0                 # several matches → pick one
@@ -30,6 +32,24 @@ Position/size values: `123` (logical px), `25%` (of the reference monitor's
 work area; `100%` fills it). Flags: `-t/--top`, `-b/--bottom`, `-l/--left`,
 `-r/--right`, `-w/--width`, `-H/--height` (`-h` is help), `-k/--keep-aspect`,
 `--title`, `--app`, `--hwnd`, `--topmost`, `--monitor`.
+
+`winfit get` reads a window without moving it: same selectors, plus
+`--json`. The `pos`/`size`/`from` numbers are exactly what the flags take
+(logical px from the work-area edges), so a measured window can be restored
+verbatim:
+
+```
+"Untitled - Notepad" hwnd 0x000D0DFE pid 16636 app Notepad class Notepad
+  pos     left 100 (3.9%)   top 200 (14.4%)
+  size    width 800 (31.2%)  height 600 (43.1%)
+  from    right 1660 (64.8%)  bottom 592 (42.5%)
+  rect    150,300 1200x900 px on work area 0,0 3840x2088  monitor 1 \\.\DISPLAY11 @150%
+```
+
+`--json` emits one object with `hwnd`, `pid`, `app`, `class`, `title`,
+`rect` and `workArea` (physical px), `position`/`size`/`from` (logical px,
+flag-ready), `percent`, `monitor` (`index` + `name`), `scale`, `minimized`,
+`maximized`.
 
 Guarantees: a resized window is always fully inside the work area;
 move-only keeps ≥ 64 px of the window reachable; windows owned by another

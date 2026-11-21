@@ -266,3 +266,68 @@ func TestInvariantContainment(t *testing.T) {
 		}
 	}
 }
+
+func TestEdgeOffsetsFrom(t *testing.T) {
+	wa := Rect{X: 0, Y: 0, W: 1920, H: 1040}
+	for _, tc := range []struct {
+		wa, r Rect
+		want  EdgeOffsets
+	}{
+		{wa, Rect{X: 0, Y: 0, W: 800, H: 600}, EdgeOffsets{Left: 0, Top: 0, Right: 1120, Bottom: 440}},
+		{wa, Rect{X: 100, Y: 50, W: 800, H: 600}, EdgeOffsets{Left: 100, Top: 50, Right: 1020, Bottom: 390}},
+		{Rect{X: 1920, Y: 0, W: 1920, H: 1040}, Rect{X: 1930, Y: 10, W: 100, H: 100}, EdgeOffsets{Left: 10, Top: 10, Right: 1810, Bottom: 930}},
+		{wa, Rect{X: 1900, Y: 1000, W: 200, H: 200}, EdgeOffsets{Left: 1900, Top: 1000, Right: -180, Bottom: -160}},
+	} {
+		if got := EdgeOffsetsFrom(tc.wa, tc.r); got != tc.want {
+			t.Errorf("EdgeOffsetsFrom(%v, %v) = %+v want %+v", tc.wa, tc.r, got, tc.want)
+		}
+	}
+}
+
+func TestPercentagesFrom(t *testing.T) {
+	wa := Rect{X: 0, Y: 0, W: 2000, H: 1000}
+	got := PercentagesFrom(wa, Rect{X: 100, Y: 200, W: 1000, H: 500})
+	want := Percentages{Left: 5, Top: 20, Right: 45, Bottom: 30, Width: 50, Height: 50}
+	if got != want {
+		t.Errorf("PercentagesFrom = %+v want %+v", got, want)
+	}
+	// A full-work-area window reads as 100% on both axes and 0 at the edges.
+	full := PercentagesFrom(wa, wa)
+	if full.Width != 100 || full.Height != 100 || full.Left != 0 || full.Bottom != 0 {
+		t.Errorf("a full-work-area window should read 100 size / 0 edges, got %+v", full)
+	}
+	// Degenerate work area must not divide by zero.
+	if z := PercentagesFrom(Rect{}, Rect{W: 10, H: 10}); z != (Percentages{}) {
+		t.Errorf("zero extent should be all zeros, got %+v", z)
+	}
+}
+
+// The values `winfit get` prints must be the ones the flags take, so a
+// measured window can be restored at 150% scaling without drift.
+func TestPhysicalToLogical(t *testing.T) {
+	for _, tc := range []struct {
+		px    int
+		scale float64
+		want  int
+	}{
+		{150, 1.5, 100},
+		{151, 1.5, 101},
+		{75, 1.5, 50},
+		{100, 1, 100},
+		{-150, 1.5, -100},
+		{100, 0, 100}, // unknown scale: report as-is
+	} {
+		if got := PhysicalToLogical(tc.px, tc.scale); got != tc.want {
+			t.Errorf("PhysicalToLogical(%d, %v) = %d want %d", tc.px, tc.scale, got, tc.want)
+		}
+	}
+	// Round-trip: a logical request scaled up must read back at the same size.
+	for _, scale := range []float64{1, 1.25, 1.5, 2} {
+		for _, logical := range []int{0, 1, 100, 800, 1920} {
+			phys := int(float64(logical) * scale)
+			if back := PhysicalToLogical(phys, scale); back != logical {
+				t.Errorf("scale %v: %d logical -> %d px -> %d logical", scale, logical, phys, back)
+			}
+		}
+	}
+}

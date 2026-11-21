@@ -49,6 +49,10 @@ func WorkArea(hwnd uintptr) (place.Rect, error) { return place.Rect{}, errUnsupp
 // Monitors is unsupported off Windows.
 func Monitors() ([]Monitor, error) { return nil, errUnsupported }
 
+// WindowState reports an ordinary window off Windows (no window manager to
+// consult).
+func WindowState(hwnd uintptr) (iconic, maximized bool) { return false, false }
+
 // Scale returns 1 off Windows.
 func Scale(hwnd uintptr) float64 { return 1 }
 

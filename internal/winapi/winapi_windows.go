@@ -340,6 +340,16 @@ func monitorName(hmon uintptr) string {
 	return windows.UTF16ToString(mi.name[:])
 }
 
+// WindowState reports whether the window is minimized (IsIconic) or carries
+// WS_MAXIMIZE. `winfit get` uses it to flag rects that are the restored or
+// the maximized geometry rather than an ordinary placement.
+func WindowState(hwnd uintptr) (iconic, maximized bool) {
+	if v, _, _ := pIsIconic.Call(hwnd); v != 0 {
+		iconic = true
+	}
+	return iconic, getStyle(hwnd)&wsMaximize != 0
+}
+
 // Scale returns the window's DPI scale factor (logical to physical px multiplier).
 func Scale(hwnd uintptr) float64 {
 	if p := user32.NewProc("GetDpiForWindow"); p.Find() == nil {

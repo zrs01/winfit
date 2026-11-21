@@ -13,7 +13,7 @@ func moveFlags() []cli.Flag {
 	pos := func(name, alias, usage string) cli.Flag {
 		return &cli.StringFlag{Name: name, Aliases: []string{alias}, Usage: usage}
 	}
-	return []cli.Flag{
+	flags := []cli.Flag{
 		pos("top", "t", "position from top edge: px or % of work-area height"),
 		pos("bottom", "b", "position from bottom edge: px or %"),
 		pos("left", "l", "position from left edge: px or % of work-area width"),
@@ -21,12 +21,28 @@ func moveFlags() []cli.Flag {
 		&cli.StringFlag{Name: "width", Aliases: []string{"w"}, Usage: "window width: px or % of work area"},
 		&cli.StringFlag{Name: "height", Aliases: []string{"H"}, Usage: "window height: px or % (capital -H; -h is help)"},
 		&cli.BoolFlag{Name: "keep-aspect", Aliases: []string{"k"}, Usage: "preserve current aspect ratio on resize"},
+	}
+	flags = append(flags, selectorFlags()...)
+	return append(flags, &cli.StringFlag{Name: "monitor", Usage: "reference monitor: 1-based index or display name"})
+}
+
+// selectorFlags are the target-selection flags, shared by every subcommand
+// that resolves a window (root move, get).
+func selectorFlags() []cli.Flag {
+	return []cli.Flag{
 		&cli.StringFlag{Name: "hwnd", Usage: "target this exact window handle (hex, from 'winfit list')"},
 		&cli.StringFlag{Name: "title", Usage: "target window whose title contains this"},
 		&cli.StringFlag{Name: "app", Usage: "target window whose executable name contains this"},
 		&cli.BoolFlag{Name: "topmost", Usage: "among several matches, pick the frontmost"},
-		&cli.StringFlag{Name: "monitor", Usage: "reference monitor: 1-based index or display name"},
 	}
+}
+
+// getFlags are `winfit get`'s flags: the selectors plus machine-readable
+// output. No geometry flags — get never moves anything.
+func getFlags() []cli.Flag {
+	return append(selectorFlags(),
+		&cli.BoolFlag{Name: "json", Usage: "emit one JSON object on stdout"},
+	)
 }
 
 // specFromFlags parses the position/size flags into a place.Spec.
