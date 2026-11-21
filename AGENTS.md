@@ -52,7 +52,11 @@ non-Windows stubs in sync with the windows implementations.
   (`.goreleaser.yaml`) on ubuntu-latest, publishing zipped
   `windows_amd64`/`windows_arm64` binaries + `checksums.txt` + changelog to
   the GitHub Release. `main.version` comes from the tag
-  (`-ldflags -X main.version=<tag>`), same stamp as the Makefile. Check the
+  (`-ldflags -X main.version=<tag>`), same stamp as the Makefile — the
+  version is derived from the tag, never hand-edited into a source file.
+  `CHANGELOG.md` carries the curated, consumer-facing notes (write the entry
+  in the same change as the feature; the release body itself is generated
+  from the commit list, with `^docs:`/`^test:`/`^chore:` filtered). Check the
   packaging locally with `goreleaser release --snapshot --clean` (output in
   gitignored `dist/`).
 - CI: `.github/workflows/ci.yml` — `go build ./...`, `go test ./...`, gofmt

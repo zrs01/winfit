@@ -67,7 +67,10 @@ Unzip and put `winfit.exe` anywhere on `PATH`.
 
 Cutting a release: `git tag vX.Y.Z && git push origin vX.Y.Z` — the
 `release` workflow runs GoReleaser (`.goreleaser.yaml`) and publishes the
-zips, checksums and changelog automatically.
+zips, checksums and changelog automatically. Write the `CHANGELOG.md` entry
+in the same change as the feature it describes; it is the curated,
+human-facing summary, while the release notes themselves are generated from
+the commit list.
 
 ## Build & test
 
